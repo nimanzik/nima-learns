@@ -1,0 +1,11 @@
+[project]
+name = "ai-agents-crash-course"
+version = "0.1.0"
+description = "AI Agents Crash Course - DataTalksClub"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "google-genai>=1.59.0",
+    "python-frontmatter>=1.1.0",
+    "requests>=2.32.5",
+]
