@@ -10,8 +10,8 @@ import pytest
 from repo_sage.defaults import DEFAULT_EMBEDDING_MODEL_ID
 from repo_sage.ingestion.vector_engine import (
     QdrantEngine,
-    get_embedding_model,
-    get_qdrant_client,
+    _get_embedding_model,
+    _get_qdrant_client,
 )
 
 if TYPE_CHECKING:
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
 
 class TestGetEmbeddingModel:
-    """Tests for get_embedding_model function."""
+    """Tests for _get_embedding_model function."""
 
     def test_returns_sentence_transformer(self, mocker: MockerFixture) -> None:
         """Returns a SentenceTransformer instance."""
@@ -30,9 +30,9 @@ class TestGetEmbeddingModel:
         mock_transformer.return_value = mock_model
 
         # Clear cache to ensure fresh call
-        get_embedding_model.cache_clear()
+        _get_embedding_model.cache_clear()
 
-        result = get_embedding_model("test-model-id")
+        result = _get_embedding_model("test-model-id")
 
         mock_transformer.assert_called_once_with(
             "test-model-id", model_kwargs={"torch_dtype": "float16"}
@@ -47,11 +47,11 @@ class TestGetEmbeddingModel:
         mock_model = mocker.Mock()
         mock_transformer.return_value = mock_model
 
-        get_embedding_model.cache_clear()
+        _get_embedding_model.cache_clear()
 
         # Call twice with same ID
-        result1 = get_embedding_model("cached-model")
-        result2 = get_embedding_model("cached-model")
+        result1 = _get_embedding_model("cached-model")
+        result2 = _get_embedding_model("cached-model")
 
         # Should only create one instance
         assert mock_transformer.call_count == 1
@@ -68,10 +68,10 @@ class TestGetEmbeddingModel:
         mock_model_b = mocker.Mock()
         mock_transformer.side_effect = [mock_model_a, mock_model_b]
 
-        get_embedding_model.cache_clear()
+        _get_embedding_model.cache_clear()
 
-        result1 = get_embedding_model("model-a")
-        result2 = get_embedding_model("model-b")
+        result1 = _get_embedding_model("model-a")
+        result2 = _get_embedding_model("model-b")
 
         assert mock_transformer.call_count == 2
         assert result1 == mock_model_a
@@ -79,7 +79,7 @@ class TestGetEmbeddingModel:
 
 
 class TestGetQdrantClient:
-    """Tests for get_qdrant_client function."""
+    """Tests for _get_qdrant_client function."""
 
     def test_returns_qdrant_client(self, mocker: MockerFixture) -> None:
         """Returns a QdrantClient instance with given path."""
@@ -89,9 +89,9 @@ class TestGetQdrantClient:
         mock_client = mocker.Mock()
         mock_client_class.return_value = mock_client
 
-        get_qdrant_client.cache_clear()
+        _get_qdrant_client.cache_clear()
 
-        result = get_qdrant_client("/path/to/db")
+        result = _get_qdrant_client("/path/to/db")
 
         mock_client_class.assert_called_once_with(path="/path/to/db")
         assert result == mock_client
@@ -104,10 +104,10 @@ class TestGetQdrantClient:
         mock_client = mocker.Mock()
         mock_client_class.return_value = mock_client
 
-        get_qdrant_client.cache_clear()
+        _get_qdrant_client.cache_clear()
 
-        result1 = get_qdrant_client("/cached/path")
-        result2 = get_qdrant_client("/cached/path")
+        result1 = _get_qdrant_client("/cached/path")
+        result2 = _get_qdrant_client("/cached/path")
 
         assert mock_client_class.call_count == 1
         assert result1 is result2
@@ -123,10 +123,10 @@ class TestGetQdrantClient:
         mock_client_b = mocker.Mock()
         mock_client_class.side_effect = [mock_client_a, mock_client_b]
 
-        get_qdrant_client.cache_clear()
+        _get_qdrant_client.cache_clear()
 
-        result1 = get_qdrant_client("/path/a")
-        result2 = get_qdrant_client("/path/b")
+        result1 = _get_qdrant_client("/path/a")
+        result2 = _get_qdrant_client("/path/b")
 
         assert mock_client_class.call_count == 2
         assert result1 == mock_client_a
@@ -174,7 +174,7 @@ class TestQdrantEngineClientProperty:
     def test_creates_client_on_first_access(self, mocker: MockerFixture) -> None:
         """Creates client lazily on first access."""
         mock_get_client = mocker.patch(
-            "repo_sage.ingestion.vector_engine.get_qdrant_client"
+            "repo_sage.ingestion.vector_engine._get_qdrant_client"
         )
         mock_client = mocker.Mock()
         mock_get_client.return_value = mock_client
@@ -191,7 +191,7 @@ class TestQdrantEngineClientProperty:
     ) -> None:
         """Returns cached client on subsequent accesses."""
         mock_get_client = mocker.patch(
-            "repo_sage.ingestion.vector_engine.get_qdrant_client"
+            "repo_sage.ingestion.vector_engine._get_qdrant_client"
         )
         mock_client = mocker.Mock()
         mock_get_client.return_value = mock_client
@@ -211,7 +211,7 @@ class TestQdrantEngineEmbeddingModelProperty:
     def test_creates_model_on_first_access(self, mocker: MockerFixture) -> None:
         """Creates embedding model lazily on first access."""
         mock_get_model = mocker.patch(
-            "repo_sage.ingestion.vector_engine.get_embedding_model"
+            "repo_sage.ingestion.vector_engine._get_embedding_model"
         )
         mock_model = mocker.Mock()
         mock_get_model.return_value = mock_model
@@ -232,7 +232,7 @@ class TestQdrantEngineEmbeddingModelProperty:
     ) -> None:
         """Returns cached model on subsequent accesses."""
         mock_get_model = mocker.patch(
-            "repo_sage.ingestion.vector_engine.get_embedding_model"
+            "repo_sage.ingestion.vector_engine._get_embedding_model"
         )
         mock_model = mocker.Mock()
         mock_get_model.return_value = mock_model
@@ -252,10 +252,10 @@ class TestQdrantEngineEnsureCollection:
     def test_creates_collection_when_not_exists(self, mocker: MockerFixture) -> None:
         """Creates collection when it does not exist."""
         mock_get_client = mocker.patch(
-            "repo_sage.ingestion.vector_engine.get_qdrant_client"
+            "repo_sage.ingestion.vector_engine._get_qdrant_client"
         )
         mock_get_model = mocker.patch(
-            "repo_sage.ingestion.vector_engine.get_embedding_model"
+            "repo_sage.ingestion.vector_engine._get_embedding_model"
         )
 
         mock_client = mocker.Mock()
@@ -279,7 +279,7 @@ class TestQdrantEngineEnsureCollection:
     def test_skips_creation_when_collection_exists(self, mocker: MockerFixture) -> None:
         """Skips creation when collection already exists."""
         mock_get_client = mocker.patch(
-            "repo_sage.ingestion.vector_engine.get_qdrant_client"
+            "repo_sage.ingestion.vector_engine._get_qdrant_client"
         )
 
         mock_client = mocker.Mock()
@@ -296,7 +296,7 @@ class TestQdrantEngineEnsureCollection:
     def test_skips_check_when_already_created(self, mocker: MockerFixture) -> None:
         """Skips existence check when collection already created in session."""
         mock_get_client = mocker.patch(
-            "repo_sage.ingestion.vector_engine.get_qdrant_client"
+            "repo_sage.ingestion.vector_engine._get_qdrant_client"
         )
 
         mock_client = mocker.Mock()
@@ -314,10 +314,10 @@ class TestQdrantEngineEnsureCollection:
     ) -> None:
         """Raises ValueError when embedding dimension is unknown."""
         mock_get_client = mocker.patch(
-            "repo_sage.ingestion.vector_engine.get_qdrant_client"
+            "repo_sage.ingestion.vector_engine._get_qdrant_client"
         )
         mock_get_model = mocker.patch(
-            "repo_sage.ingestion.vector_engine.get_embedding_model"
+            "repo_sage.ingestion.vector_engine._get_embedding_model"
         )
 
         mock_client = mocker.Mock()
@@ -338,7 +338,7 @@ class TestQdrantEngineEnsureCollection:
     def test_sets_collection_created_flag(self, mocker: MockerFixture) -> None:
         """Sets _collection_created flag after ensuring collection."""
         mock_get_client = mocker.patch(
-            "repo_sage.ingestion.vector_engine.get_qdrant_client"
+            "repo_sage.ingestion.vector_engine._get_qdrant_client"
         )
 
         mock_client = mocker.Mock()
@@ -358,10 +358,10 @@ class TestQdrantEngineStore:
     def test_stores_single_text_as_string(self, mocker: MockerFixture) -> None:
         """Accepts single text string and stores it."""
         mock_get_client = mocker.patch(
-            "repo_sage.ingestion.vector_engine.get_qdrant_client"
+            "repo_sage.ingestion.vector_engine._get_qdrant_client"
         )
         mock_get_model = mocker.patch(
-            "repo_sage.ingestion.vector_engine.get_embedding_model"
+            "repo_sage.ingestion.vector_engine._get_embedding_model"
         )
 
         mock_client = mocker.Mock()
@@ -385,10 +385,10 @@ class TestQdrantEngineStore:
     def test_stores_list_of_texts(self, mocker: MockerFixture) -> None:
         """Stores multiple texts from a list."""
         mock_get_client = mocker.patch(
-            "repo_sage.ingestion.vector_engine.get_qdrant_client"
+            "repo_sage.ingestion.vector_engine._get_qdrant_client"
         )
         mock_get_model = mocker.patch(
-            "repo_sage.ingestion.vector_engine.get_embedding_model"
+            "repo_sage.ingestion.vector_engine._get_embedding_model"
         )
 
         mock_client = mocker.Mock()
@@ -415,10 +415,10 @@ class TestQdrantEngineStore:
     def test_creates_points_with_correct_payload(self, mocker: MockerFixture) -> None:
         """Creates points with text in payload."""
         mock_get_client = mocker.patch(
-            "repo_sage.ingestion.vector_engine.get_qdrant_client"
+            "repo_sage.ingestion.vector_engine._get_qdrant_client"
         )
         mock_get_model = mocker.patch(
-            "repo_sage.ingestion.vector_engine.get_embedding_model"
+            "repo_sage.ingestion.vector_engine._get_embedding_model"
         )
 
         mock_client = mocker.Mock()
@@ -441,10 +441,10 @@ class TestQdrantEngineStore:
     def test_ensures_collection_before_storing(self, mocker: MockerFixture) -> None:
         """Ensures collection exists before storing."""
         mock_get_client = mocker.patch(
-            "repo_sage.ingestion.vector_engine.get_qdrant_client"
+            "repo_sage.ingestion.vector_engine._get_qdrant_client"
         )
         mock_get_model = mocker.patch(
-            "repo_sage.ingestion.vector_engine.get_embedding_model"
+            "repo_sage.ingestion.vector_engine._get_embedding_model"
         )
 
         mock_client = mocker.Mock()
@@ -469,10 +469,10 @@ class TestQdrantEngineSearch:
     def test_returns_matching_texts(self, mocker: MockerFixture) -> None:
         """Returns texts from search results."""
         mock_get_client = mocker.patch(
-            "repo_sage.ingestion.vector_engine.get_qdrant_client"
+            "repo_sage.ingestion.vector_engine._get_qdrant_client"
         )
         mock_get_model = mocker.patch(
-            "repo_sage.ingestion.vector_engine.get_embedding_model"
+            "repo_sage.ingestion.vector_engine._get_embedding_model"
         )
 
         mock_result_1 = mocker.Mock()
@@ -500,10 +500,10 @@ class TestQdrantEngineSearch:
     def test_uses_correct_collection_and_limit(self, mocker: MockerFixture) -> None:
         """Queries with correct collection name and limit."""
         mock_get_client = mocker.patch(
-            "repo_sage.ingestion.vector_engine.get_qdrant_client"
+            "repo_sage.ingestion.vector_engine._get_qdrant_client"
         )
         mock_get_model = mocker.patch(
-            "repo_sage.ingestion.vector_engine.get_embedding_model"
+            "repo_sage.ingestion.vector_engine._get_embedding_model"
         )
 
         mock_query_response = mocker.Mock()
@@ -529,10 +529,10 @@ class TestQdrantEngineSearch:
     def test_default_top_k_is_five(self, mocker: MockerFixture) -> None:
         """Uses default top_k of 5."""
         mock_get_client = mocker.patch(
-            "repo_sage.ingestion.vector_engine.get_qdrant_client"
+            "repo_sage.ingestion.vector_engine._get_qdrant_client"
         )
         mock_get_model = mocker.patch(
-            "repo_sage.ingestion.vector_engine.get_embedding_model"
+            "repo_sage.ingestion.vector_engine._get_embedding_model"
         )
 
         mock_query_response = mocker.Mock()
@@ -556,10 +556,10 @@ class TestQdrantEngineSearch:
     def test_skips_results_without_payload(self, mocker: MockerFixture) -> None:
         """Skips results that have no payload."""
         mock_get_client = mocker.patch(
-            "repo_sage.ingestion.vector_engine.get_qdrant_client"
+            "repo_sage.ingestion.vector_engine._get_qdrant_client"
         )
         mock_get_model = mocker.patch(
-            "repo_sage.ingestion.vector_engine.get_embedding_model"
+            "repo_sage.ingestion.vector_engine._get_embedding_model"
         )
 
         mock_result_1 = mocker.Mock()
@@ -587,10 +587,10 @@ class TestQdrantEngineSearch:
     def test_skips_results_without_text_key(self, mocker: MockerFixture) -> None:
         """Skips results that have payload but no 'text' key."""
         mock_get_client = mocker.patch(
-            "repo_sage.ingestion.vector_engine.get_qdrant_client"
+            "repo_sage.ingestion.vector_engine._get_qdrant_client"
         )
         mock_get_model = mocker.patch(
-            "repo_sage.ingestion.vector_engine.get_embedding_model"
+            "repo_sage.ingestion.vector_engine._get_embedding_model"
         )
 
         mock_result_1 = mocker.Mock()
@@ -618,10 +618,10 @@ class TestQdrantEngineSearch:
     def test_encodes_query_with_model(self, mocker: MockerFixture) -> None:
         """Encodes query string using embedding model."""
         mock_get_client = mocker.patch(
-            "repo_sage.ingestion.vector_engine.get_qdrant_client"
+            "repo_sage.ingestion.vector_engine._get_qdrant_client"
         )
         mock_get_model = mocker.patch(
-            "repo_sage.ingestion.vector_engine.get_embedding_model"
+            "repo_sage.ingestion.vector_engine._get_embedding_model"
         )
 
         mock_query_response = mocker.Mock()
@@ -647,10 +647,10 @@ class TestQdrantEngineSearch:
     def test_returns_empty_list_when_no_results(self, mocker: MockerFixture) -> None:
         """Returns empty list when search finds no results."""
         mock_get_client = mocker.patch(
-            "repo_sage.ingestion.vector_engine.get_qdrant_client"
+            "repo_sage.ingestion.vector_engine._get_qdrant_client"
         )
         mock_get_model = mocker.patch(
-            "repo_sage.ingestion.vector_engine.get_embedding_model"
+            "repo_sage.ingestion.vector_engine._get_embedding_model"
         )
 
         mock_query_response = mocker.Mock()

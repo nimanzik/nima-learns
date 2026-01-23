@@ -1,8 +1,15 @@
 from functools import lru_cache
 
 from google import genai
+from semantic_text_splitter import TextSplitter
+from tokenizers import Tokenizer
 
-from ..defaults import DEFAULT_GEMINI_MODEL_ID
+from ..defaults import (
+    DEFAULT_GEMINI_MODEL_ID,
+    DEFAULT_MAX_CHUNK_OVERLAP,
+    DEFAULT_MAX_TOKENS_PER_CHUNK,
+    DEFAULT_TOKENIZER_MODEL_ID,
+)
 
 SECTION_DELIMITER = "<<<SECTION_BREAK>>>"
 
@@ -38,20 +45,38 @@ Output format should be:
 
 
 @lru_cache(maxsize=1)
-def get_genai_client() -> genai.Client:
+def _get_genai_client() -> genai.Client:
     """Get or create a cached Google GenAI client."""
     return genai.Client()
 
 
-def chunk_document(document: str, gemini_model_id: str | None = None) -> list[str]:
-    """Chunk a document into logical sections using a powerful LLM."""
-    client = get_genai_client()
+def llm_split(text: str, gemini_model_id: str | None = None) -> list[str]:
+    """Split a text semantically using Google Gemini model."""
+    client = _get_genai_client()
     response = client.models.generate_content(
         model=gemini_model_id or DEFAULT_GEMINI_MODEL_ID,
-        contents=PROMPT_TEMPLATE.format(document=document),
+        contents=PROMPT_TEMPLATE.format(document=text),
     )
     if not response.text:
         return []
 
     sections = response.text.split(SECTION_DELIMITER)
     return [section.strip() for section in sections if section.strip()]
+
+
+@lru_cache(maxsize=8)
+def _get_tokenizer(tokenizer_model_id: str) -> Tokenizer:
+    """Get or create a cached tokenizer."""
+    return Tokenizer.from_pretrained(tokenizer_model_id)
+
+
+def token_split(text: str, tokenizer_model_id: str | None = None) -> list[str]:
+    """Split a text semantically using a tokenizer-based text splitter."""
+    tokenizer = _get_tokenizer(tokenizer_model_id or DEFAULT_TOKENIZER_MODEL_ID)
+    splitter = TextSplitter.from_huggingface_tokenizer(
+        tokenizer,
+        capacity=DEFAULT_MAX_TOKENS_PER_CHUNK,
+        overlap=DEFAULT_MAX_CHUNK_OVERLAP,
+        trim=True,
+    )
+    return splitter.chunks(text)

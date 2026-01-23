@@ -1,18 +1,18 @@
-"""Tests for the chunking module."""
+"""Tests for the spliting module."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from unittest.mock import Mock
 
-from repo_sage.ingestion.chunking import chunk_document
+from repo_sage.ingestion.splitting import llm_split
 
 if TYPE_CHECKING:
     from unittest.mock import MagicMock
 
 
 class TestChunkDocument:
-    """Tests for chunk_document function."""
+    """Tests for llm_split function."""
 
     def test_success_splits_on_delimiter(self, mock_genai_client: MagicMock) -> None:
         """Splits document into chunks based on delimiter."""
@@ -24,7 +24,7 @@ class TestChunkDocument:
             mock_response
         )
 
-        result = chunk_document("Some document text")
+        result = llm_split("Some document text")
 
         assert len(result) == 2
         assert "Section 1" in result[0]
@@ -40,7 +40,7 @@ class TestChunkDocument:
             mock_response
         )
 
-        result = chunk_document("Some document text")
+        result = llm_split("Some document text")
 
         assert result == []
 
@@ -52,7 +52,7 @@ class TestChunkDocument:
             mock_response
         )
 
-        result = chunk_document("Some document text")
+        result = llm_split("Some document text")
 
         assert len(result) == 1
         assert "Single Section" in result[0]
@@ -67,7 +67,7 @@ class TestChunkDocument:
             mock_response
         )
 
-        result = chunk_document("Some document text")
+        result = llm_split("Some document text")
 
         assert len(result) == 2
         assert result[0] == "## Section 1\nContent"
@@ -81,7 +81,7 @@ class TestChunkDocument:
             mock_response
         )
 
-        chunk_document("Some document", gemini_model_id="gemini-pro")
+        llm_split("Some document", gemini_model_id="gemini-pro")
 
         mock_genai_client.return_value.models.generate_content.assert_called_once()
         call_kwargs = mock_genai_client.return_value.models.generate_content.call_args

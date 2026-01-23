@@ -42,4 +42,4 @@ def mock_requests_get(mocker: MockerFixture) -> MockerFixture:
 @pytest.fixture
 def mock_genai_client(mocker: MockerFixture) -> MockerFixture:
     """Mock the genai client for LLM calls."""
-    return mocker.patch("repo_sage.ingestion.chunking.get_genai_client")
+    return mocker.patch("repo_sage.ingestion.splitting._get_genai_client")
