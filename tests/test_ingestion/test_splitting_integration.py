@@ -1,4 +1,4 @@
-"""Integration tests for the chunking module.
+"""Integration tests for the spliting module.
 
 These tests hit real external services (Google Gemini).
 
@@ -16,17 +16,17 @@ import os
 
 import pytest
 
-from repo_sage.ingestion.chunking import chunk_document
+from repo_sage.ingestion.splitting import llm_split
 
 pytestmark = pytest.mark.integration
 
 
 class TestChunkDocumentIntegration:
-    """Integration tests for chunk_document against real Gemini API."""
+    """Integration tests for llm_split against real Gemini API."""
 
     @pytest.fixture
     def sample_document(self) -> str:
-        """Sample document for chunking tests."""
+        """Sample document for spliting tests."""
         return """
 Artificial Intelligence (AI) is a branch of computer science that aims to create
 machines capable of intelligent behaviour. It encompasses various subfields,
@@ -48,7 +48,7 @@ chatbots, translation services, and sentiment analysis.
     )
     def test_chunks_document_with_real_llm(self, sample_document: str) -> None:
         """Chunks a document using the real Gemini API."""
-        result = chunk_document(sample_document)
+        result = llm_split(sample_document)
 
         assert len(result) >= 1
         assert all(isinstance(chunk, str) for chunk in result)
@@ -60,7 +60,7 @@ chatbots, translation services, and sentiment analysis.
     )
     def test_chunks_preserve_content(self, sample_document: str) -> None:
         """Chunks should contain text from the original document."""
-        result = chunk_document(sample_document)
+        result = llm_split(sample_document)
 
         # At least some key terms should appear in the chunks
         all_chunks_text = " ".join(result)
