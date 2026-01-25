@@ -1,27 +1,23 @@
 # git-grok
 
-A conversational Q&A agent that answers questions about a GitHub repository.
+A conversational Q&A agent built using Retrieval-Augmented Generation (RAG) to answer questions about code repositories.
 
 > [!NOTE]
-> This project is a work in progress and not yet complete.
+> This project is for personal learning purposes only and is not intended for production use.
 
 ## Overview
 
-git-grok aims to make it easy to ask natural language questions about the
-documentation in any public GitHub repository. It downloads markdown files,
-intelligently chunks them using an LLM, and stores embeddings in a local vector
-database for semantic search.
+The agent allows user to ask natural-language questions about the documentation of any public repository (at the moment, only GitHub is supported). It downloads Markdown and React Markdown files, intelligently chunks them using an LLM, and generates embeddings for each chunk. These embeddings are stored in a local vector database for semantic search.
 
-The motivation is to enable quick, context-aware answers without manually
-searching through large documentation sets.
+At query time, the agent retrieves relevant documentation and uses it as context to generate accurate, repository-aware answers. This makes it easy to explore and understand large documentation sets quickly and without manual searching.
 
 ## How It Works
 
 1. **Fetch**: Downloads and processes `.md` and `.mdx` files from a GitHub repository.
 2. **Chunk**: Uses Google Gemini to split documents into logical sections.
-3. **Embed & Store**: Generates embeddings using a pretrained [Sentence Transformers](https://www.sbert.net/index.html) (a.k.a SBERT)
-   model and stores them locally via [Qdrant](https://qdrant.tech/).
+3. **Embed & Store**: Generates embeddings using a pretrained [Sentence Transformers](https://www.sbert.net/index.html) (a.k.a SBERT) model and stores them locally via [Qdrant](https://qdrant.tech/) vector database.
 4. **Search**: Performs semantic search to retrieve relevant context for Q&A.
+5. **Answer**: Uses the retrieved context to generate a natural-language answer.
 
 ## License
 
