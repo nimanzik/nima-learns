@@ -1,6 +1,6 @@
 # git-grok
 
-A conversational Q&A agent built using Retrieval-Augmented Generation (RAG) to answer questions about code repositories.
+***A conversational Q&A agent built using Retrieval-Augmented Generation (RAG) to answer questions about code repositories.***
 
 > [!NOTE]
 > This project is for personal learning purposes only and is not intended for production use.
